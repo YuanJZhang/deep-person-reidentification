@@ -24,7 +24,7 @@ from eval_metrics import evaluate
 
 parser = argparse.ArgumentParser(description='Train image model with center loss')
 # Datasets
-parser.add_argument('--root', type=str, default='data', help="root path to data directory")
+parser.add_argument('--root', type=str, default='/home/zyj/deep-person-reidentification/data', help="root path to data directory")
 parser.add_argument('-d', '--dataset', type=str, default='market1501',)
                     #choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
@@ -109,7 +109,7 @@ def main():
     ])
 
     transform_test = T.Compose([
-        T.Resize(args.height, args.width),
+        T.Resize((args.height, args.width)),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
@@ -172,7 +172,7 @@ def main():
 
     for epoch in range(start_epoch, args.max_epoch):
         start_train_time = time.time()
-        train(epoch, model, critierion_class, optimizer, trainloader, use_gpu)
+        #train(epoch, model, critierion_class, optimizer, trainloader, use_gpu)
         train_time += round(time.time() - start_train_time)
 
         if args.stepsize > 0: scheduler.step()
@@ -214,12 +214,13 @@ def train(epoch, model, critierion_class, optimazier, trainloader, use_gpu):
         #imgs, pids, _ = data
         if use_gpu:
             imgs, pids =imgs.cuda(), pids.cuda()
-
+        #print(pids,pids.size(0))
         data_time.update(time.time() - end)
         start = time.time()
 
         outputs = model(imgs)
         loss = critierion_class(outputs, pids)
+        #print(loss)
         optimazier.zero_grad()
         loss.backward()
         optimazier.step()
@@ -259,6 +260,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20]):
             qf.append(features)
             q_pids.extend(pids)
             q_camids.extend(camids)
+        #按行拼接
         qf = torch.cat(qf, 0)
         q_pids = np.asarray(q_pids)
         q_camids = np.asarray(q_camids)
